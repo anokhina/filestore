@@ -15,21 +15,17 @@
  */
 package ru.org.sevn.filestore.resource;
 
-import java.io.File;
-
-
 public class RootFileResource extends DirResource {
 
     private static org.apache.log4j.Logger log = org.apache.log4j.Logger.getLogger(RootFileResource.class);
     
-    public RootFileResource(final File storeDir) {
-        super(null, storeDir);
+    public RootFileResource() {
+        super(null, "");
     }
 
     @Override
     public String getName() {
         return "";
     }
-    
     
 }

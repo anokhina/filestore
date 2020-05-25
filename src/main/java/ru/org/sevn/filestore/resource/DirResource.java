@@ -33,8 +33,9 @@ import java.util.List;
 import java.util.Map;
 
 
-public class DirResource extends BaseFileDirResource 
+public class DirResource extends BaseFileResource<DirResource>
         implements 
+        FolderResource,
         CollectionResource, 
         MakeCollectionableResource, 
         MoveableResource,
@@ -43,66 +44,76 @@ public class DirResource extends BaseFileDirResource
 
     private static org.apache.log4j.Logger log = org.apache.log4j.Logger.getLogger(DirResource.class);
 
-    public DirResource(final DirResource parent, final File file) {
-        super(parent, file);
+    public DirResource(final DirResource parent, final String name) {
+        super(parent, name);
     }
     
-    private final Map<String, Resource> children = new LinkedHashMap<>();
+    //private final Map<String, Resource> children = new LinkedHashMap<>();
     
     @Override
     public List<? extends Resource> getChildren() {
-        retriveChildren();
+        System.out.println(">>>>>>>children>"+getPath());
+        final Map<String, Resource> children = new LinkedHashMap<>();
+        getDirResourceManager().retrieveResources(this, children);
         return new ArrayList(children.values());
     }
     
-    protected Map<String, Resource> retriveChildren() {
-        if (children.size() == 0) {
-            for (final File f : getFile().listFiles()) {
-                final Resource res;
-                if (f.isDirectory()) {
-                    res = new DirResource(this, f);
-                } else {
-                    res = new FileResource(this, f);
-                }
-                children.put(res.getName(), res);
-            }
-        }
-        return children;
+    protected <T extends Resource> T addChildResource(final T res) {
+        //children.put(res.getName(), res);
+        return res;
     }
     
-    protected <T extends Resource> T addResource(final T res) {
-        children.put(res.getName(), res);
-        return res;
+    @Override
+    public void removeChildResource(final String name) {
+        //children.remove(name);
     }
 
     @Override
     public CollectionResource createCollection(final String newName) throws NotAuthorizedException, ConflictException, BadRequestException {
-        final File newDir = new File(getFile(), newName);
-        try {
-            if (newDir.mkdirs()) {
-                return addResource(new DirResource(this, newDir));
-            } else {
-                throw new BadRequestException(this);
-            }
-        } catch (final SecurityException ex) {
-            throw new NotAuthorizedException(this, ex);
+        getDirResourceManager().getNewDirLocation(this, newName);
+        return addChildResource(new DirResource(this, newName));
+    }
+
+    private Resource getChild(final String name) {
+        //return children.get(childName);
+        return null;
+        
+    }
+    @Override
+    public Resource child(final String childName) {
+        System.out.println(">>>>>>>child>" + childName);
+        final Resource res = getChild(childName);
+        if (res == null) {
+            return getDirResourceManager().retrieve(this, childName);
+        } else {
+            return res;
         }
     }
 
     @Override
-    public Resource child(final String childName) {
-        return retriveChildren().get(childName);
-    }
-
-    @Override
     public Resource createNew(final String name, final InputStream in, final Long length, final String contentType) throws IOException, ConflictException, NotAuthorizedException, BadRequestException {
-        final File newFile = new File(getFile(), name);
+        final File newFile = getDirResourceManager().getNewLocation(this, name);
         try {
             Files.copy(in, newFile.toPath());
-            return addResource(new FileResource(this, newFile));
+            return addChildResource(new FileResource(this, newFile));
         } catch (final Throwable ex) {
             throw new NotAuthorizedException(this, ex);
         }
     }
 
+    @Override
+    public void delete() throws NotAuthorizedException, ConflictException, BadRequestException {
+        getDirResourceManager().deleteDir(this);
+        getParent().removeChildResource(getName());
+    }
+
+    @Override
+    public void moveTo(final CollectionResource dest, final String name) throws ConflictException, NotAuthorizedException, BadRequestException {
+        final String oldname = getName();
+        final DirResource distdir = (DirResource)dest;
+        getDirResourceManager().moveTo(this, distdir, name);
+        getParent().removeChildResource(oldname);
+        distdir.addChildResource(this);
+    }
+    
 }

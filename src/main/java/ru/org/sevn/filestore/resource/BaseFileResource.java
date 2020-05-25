@@ -15,50 +15,44 @@
  */
 package ru.org.sevn.filestore.resource;
 
-import io.milton.http.exceptions.BadRequestException;
-import io.milton.http.exceptions.ConflictException;
-import io.milton.http.exceptions.NotAuthorizedException;
 import io.milton.resource.DeletableResource;
-import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
-public abstract class BaseFileResource<T extends BaseFileResource> extends AbstractResource 
+public abstract class BaseFileResource<T extends FolderResource> extends AbstractResource 
         implements DeletableResource
 {
     
     private final T parent;
-    private final File file;
+    private String name;
     
-    public BaseFileResource(final T parent, final File file) {
+    public BaseFileResource(final T parent, final String name) {
         this.parent = parent;
-        this.file = file;
+        this.name = name;
     }
     
-    public File getFile() {
-        return file;
-    }
-
     public T getParent() {
         return parent;
     }
     
     @Override
     public String getName() {
-        return file.getName();
+        return name;
     }
     
-    protected abstract void deletedResource();
-    
-    @Override
-    public void delete() throws NotAuthorizedException, ConflictException, BadRequestException {
-        try {
-            if (!getFile().delete()) {
-                throw new BadRequestException(this);
-            } else {
-                deletedResource();
-            }
-        } catch (final SecurityException ex) {
-            throw new NotAuthorizedException(this, ex);
+    public Path getPath() {
+        if (this.getParent() == null) {
+            return Paths.get(getName());
+        } else {
+            return Paths.get(getParent().getPath().toString(), getName());
         }
     }
 
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public DirResourceManager getDirResourceManager() {
+        return DirResourceManager.getDirResourceManager();
+    }
 }

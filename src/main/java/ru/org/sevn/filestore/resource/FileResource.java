@@ -27,6 +27,7 @@ import io.milton.resource.GetableResource;
 import io.milton.resource.MoveableResource;
 import io.milton.resource.ReplaceableResource;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -34,21 +35,36 @@ import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.Map;
 
-public class FileResource extends BaseFileDirResource implements GetableResource, ReplaceableResource, MoveableResource, CopyableResource, DeletableResource{
+public class FileResource extends BaseFileResource<DirResource>
+        implements GetableResource, ReplaceableResource, MoveableResource, CopyableResource, DeletableResource{
 
     private static org.apache.log4j.Logger log = org.apache.log4j.Logger.getLogger(FileResource.class);
+    private final File file;
 
     public FileResource(final DirResource parent, final File file) {
-        super(parent, file);
+        super(parent, file.getName());
+        this.file = file;
     }
 
+    public File getFile() {
+        return file;
+    }
+
+    @Override
+    public void moveTo(final CollectionResource dest, final String name) throws ConflictException, NotAuthorizedException, BadRequestException {
+        final String oldname = getName();
+        final DirResource distdir = (DirResource)dest;
+        getDirResourceManager().moveTo(this, distdir, name);
+        getParent().removeChildResource(oldname);
+        distdir.addChildResource(this);
+    }
+    
     @Override
     public void copyTo(final CollectionResource toCollection, final String name) throws NotAuthorizedException, BadRequestException, ConflictException {
         if (toCollection instanceof DirResource) {
             final DirResource dirResource = (DirResource)toCollection;
-            final File newFile = new File(dirResource.getFile(), name);
-            try {
-                Files.copy(getFile().toPath(), newFile.toPath());
+            try (final InputStream is = new FileInputStream(file)) {
+                dirResource.createNew(name, is, file.length(), getContentType(null));
             } catch (IOException ex) {
                 throw new NotAuthorizedException(this, ex);
             }
@@ -61,13 +77,13 @@ public class FileResource extends BaseFileDirResource implements GetableResource
     @Override
     public void sendContent(OutputStream out, Range range, Map<String, String> params, String contentType) throws IOException {
         //TODO range
-        Files.copy(getFile().toPath(), out);
+        Files.copy(file.toPath(), out);
     }
 
     @Override
     public void replaceContent(final InputStream in, final Long length) throws BadRequestException, ConflictException, NotAuthorizedException {
         try {
-            Files.copy(in, getFile().toPath(), StandardCopyOption.REPLACE_EXISTING);
+            Files.copy(in, file.toPath(), StandardCopyOption.REPLACE_EXISTING);
         } catch (Exception ex) {
             throw new NotAuthorizedException(this, ex);
         }
@@ -75,13 +91,13 @@ public class FileResource extends BaseFileDirResource implements GetableResource
     
     @Override
     public Long getContentLength() {
-        return getFile().length();
+        return file.length();
     }
 
     @Override
     public String getContentType(final String accept) {
         try {
-            return Files.probeContentType(getFile().toPath());
+            return Files.probeContentType(file.toPath());
         } catch (IOException ex) {
             //TODO
             ex.printStackTrace();
@@ -93,6 +109,12 @@ public class FileResource extends BaseFileDirResource implements GetableResource
     @Override
     public Long getMaxAgeSeconds(final Auth auth) {
         return null;
+    }
+
+    @Override
+    public void delete() throws NotAuthorizedException, ConflictException, BadRequestException {
+        getDirResourceManager().deleteFile(this);
+        getParent().removeChildResource(getName());
     }
 
 }

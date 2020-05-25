@@ -20,44 +20,40 @@ import io.milton.http.HttpManager;
 import io.milton.http.ResourceFactory;
 import io.milton.http.exceptions.BadRequestException;
 import io.milton.http.exceptions.NotAuthorizedException;
-import io.milton.resource.CollectionResource;
 import io.milton.resource.Resource;
-import java.io.File;
+import ru.org.sevn.filestore.resource.DirResourceManager;
 import ru.org.sevn.filestore.resource.RootFileResource;
 
 public class AppResourceFactory implements ResourceFactory {
 
     private static org.apache.log4j.Logger log = org.apache.log4j.Logger.getLogger(ResourceFactory.class);
-    public static final String FILE_PATH = "fileStore";
     public static final String ATTR_ROOT = "rootResource";
 
     @Override
     public Resource getResource(String host, String url) throws NotAuthorizedException, BadRequestException {
+        System.out.println(">>>>>>>>>>>" + url);
         log.debug("getResource: url: " + url);
         final Path path = Path.path(url);
         final Resource r = find(path);
         log.debug("found: " + r + " url: " + url + " path: " + path);
         return r;
     }
+    
+    private DirResourceManager getDirResourceManager() {
+        return DirResourceManager.getDirResourceManager();
+    }
 
     private Resource find(Path path) throws NotAuthorizedException, BadRequestException {
         if (path.isRoot()) {
             RootFileResource r = (RootFileResource) HttpManager.request().getAttributes().get(ATTR_ROOT);
             if( r == null ) {
-                final File storeDir = new File(FILE_PATH); //TODO
-                log.debug("store dir: " + storeDir.getAbsolutePath());
-                storeDir.mkdirs(); //TODO
-                r = new RootFileResource(storeDir);
+                r = getDirResourceManager().getRootFileResource();
                 HttpManager.request().getAttributes().put(ATTR_ROOT, r);
             }
             
             return r;
+        } else {
+            return getDirResourceManager().find(path);
         }
-        final Resource parent = find(path.getParent());
-        if (parent instanceof CollectionResource) {
-            final CollectionResource folder = (CollectionResource) parent;
-            return folder.child(path.getName());
-        }
-        return null;
     }    
 }

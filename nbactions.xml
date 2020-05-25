@@ -6,6 +6,12 @@
             <goals>
                 <goal>jetty:run</goal>
             </goals>
+        <properties>
+            <skipTests>true</skipTests>
+            <org.eclipse.jetty.annotations.maxWait>120</org.eclipse.jetty.annotations.maxWait>
+            <Env.MAVEN_OPTS>-Xmx4096m -Duser.language=en -Duser.region=us -Xdebug -Xrunjdwp:transport=dt_socket,address=127.0.0.1:8787,server=y,suspend=n</Env.MAVEN_OPTS>
+            
+        </properties>
         </action>
         <action>
             <actionName>CUSTOM-compile jetty:run</actionName>

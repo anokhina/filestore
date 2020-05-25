@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>ru.org.sevn</groupId>
     <artifactId>filestore</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>0.0.2-SNAPSHOT</version>
     <packaging>war</packaging>
 
     <name>filestore</name>
@@ -13,9 +13,33 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
-        <milton.version>2.7.4.7</milton.version>
+        <milton.version>2.8.0.1</milton.version>
     </properties>
 
+    <repositories>
+        <!-- Main Maven repository -->
+        <repository>
+            <id>central</id>
+            <url>https://repo.maven.apache.org/maven2</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+        <repository>
+            <id>milton-repo</id>
+            <url>http://dl.bintray.com/milton/Milton</url>
+        </repository>       
+    </repositories>
+    <pluginRepositories>
+        <pluginRepository>
+            <id>central</id>
+            <url>https://repo1.maven.org/maven2</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </pluginRepository>
+    </pluginRepositories>     
+    
     <build>
         <plugins>
             <plugin>
@@ -38,13 +62,6 @@
         </plugins>
     </build>
 
-    <repositories>
-        <repository>
-            <id>milton-repo</id>
-            <url>http://dl.bintray.com/milton/Milton</url>
-        </repository>       
-    </repositories>  
-    
     <dependencies>
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -56,6 +73,12 @@
             <groupId>io.milton</groupId>
             <artifactId>milton-server-ce</artifactId>
             <version>${milton.version}</version>
-        </dependency>     
+        </dependency>
+        <dependency>
+            <groupId>commons-collections</groupId>
+            <artifactId>commons-collections</artifactId>
+            <version>3.2.2</version>
+            <type>jar</type>
+        </dependency>
     </dependencies>
 </project>
