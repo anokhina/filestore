@@ -44,6 +44,8 @@ public class DirResourceManager {
     private final AtomicInteger activeIdx = new AtomicInteger(0);
     private final AtomicLong atomicLong = new AtomicLong(0);
     
+    private final Store<String, Resource> store = new Store();
+    
     private DirResourceManager(final String... rootDirs) {
         this.rootDirs = new File[rootDirs.length];
         for (int i = 0; i < this.rootDirs.length; i++) {
@@ -98,12 +100,17 @@ public class DirResourceManager {
         if (path.isRoot()) {
             return getRootFileResource();
         } else {
-            final Resource parent = find(path.getParent());
-            if (parent instanceof CollectionResource) {
-                final CollectionResource folder = (CollectionResource) parent;
-                return folder.child(path.getName());
+            final Resource mapRes = store.get(path.toString());
+            if (mapRes == null) {
+                final Resource parent = find(path.getParent());
+                if (parent instanceof CollectionResource) {
+                    final CollectionResource folder = (CollectionResource) parent;
+                    final Resource res = folder.child(path.getName());
+                    store.put(path.toString(), res);
+                    return res;
+                }
             }
-            return null;
+            return mapRes;
         }
     }
     
@@ -137,6 +144,7 @@ public class DirResourceManager {
     }
     
     public void deleteDir(final DirResource dir) throws NotAuthorizedException, ConflictException, BadRequestException {
+        store.remove(dir.getPath().toString());
         for (final File f : getFiles(dir)) {
             if (f.exists()) {
                 if (!f.delete()) {
@@ -157,6 +165,7 @@ public class DirResourceManager {
     }
     
     public void deleteFile(final FileResource dir) throws NotAuthorizedException, ConflictException, BadRequestException {
+        store.remove(dir.getPath().toString());
         final File f = getFile(dir);
         if (f != null) {
             if (!f.delete()) {

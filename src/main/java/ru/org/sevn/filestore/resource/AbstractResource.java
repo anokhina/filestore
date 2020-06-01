@@ -31,6 +31,7 @@ public abstract class AbstractResource implements DigestResource, PropFindableRe
     //TODO
     @Override
     public Object authenticate(final String user, final String requestedPassword) {
+        System.out.println("auth-user");
         if( user.equals("user") && requestedPassword.equals("password")) {
             return user;
         }
@@ -40,6 +41,7 @@ public abstract class AbstractResource implements DigestResource, PropFindableRe
     //TODO
     @Override
     public Object authenticate(final DigestResponse digestRequest) {
+        System.out.println("auth-digest");
         if (digestRequest.getUser().equals("user")) {
             final DigestGenerator gen = new DigestGenerator();
             final String actual = gen.generateDigest(digestRequest, "password");
@@ -66,6 +68,7 @@ public abstract class AbstractResource implements DigestResource, PropFindableRe
 
     @Override
     public boolean authorise(final Request request, final Method method, final Auth auth) {
+        System.out.println("auth-auth");
         log.debug("authorise");
         return auth != null;
     }

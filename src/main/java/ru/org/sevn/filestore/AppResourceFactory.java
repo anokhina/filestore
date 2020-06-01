@@ -25,6 +25,39 @@ import ru.org.sevn.filestore.resource.DirResourceManager;
 import ru.org.sevn.filestore.resource.RootFileResource;
 
 public class AppResourceFactory implements ResourceFactory {
+    
+    //sudo mount -t davfs -o noexec https://127.0.0.1:9876/ /mnt/dav/
+    
+    /*
+keytool -genkey -alias jetty6 -keyalg RSA -keystore jetty.keystore -storepass jetty6 -keypass jetty6 -dname "CN=your name or domain"
+keytool -genkey -alias jetty9 -keyalg RSA -keystore jetty.keystore -storepass secret -keypass secret -dname "CN=ru.org.sevn.filestore"
+    
+    
+    install
+$ sudo apt-get install davfs2
+    
+    
+$ cat << EOF | sudo tee -a /etc/fstab
+
+# personal webdav
+https://webdav/ /mnt/dav davfs _netdev,noauto,user,uid=username,gid=username 0 0
+EOF
+    
+$ cat << EOF | sudo tee -a /etc/davfs2/secrets
+
+# personal webdav, nextcloud application password
+/mnt/dav username mypassword
+# older versions used URL, it is equivalent for compatibility reasons
+#https://webdav/ username mypassword
+EOF
+    
+$ sudo mount /mnt/dav
+    
+to allow plain user mount webdav
+$ sudo dpkg-reconfigure davfs2
+user must be a member of the davfs2 group
+    
+    */
 
     private static org.apache.log4j.Logger log = org.apache.log4j.Logger.getLogger(ResourceFactory.class);
     public static final String ATTR_ROOT = "rootResource";
